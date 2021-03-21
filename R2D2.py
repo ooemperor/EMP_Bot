@@ -15,6 +15,7 @@ import sys
 import json
 import requests
 from gpiozero import CPUTemperature
+from pythonping import ping
 
 description = '''R2D2'''
 intents = discord.Intents.default()
@@ -27,6 +28,9 @@ TOKEN = tk.read()
 tenor_api = open('Tenor API Key.txt', 'r')
 TENOR_API_KEY = tenor_api.read()
 Limit_Tenor = 1
+
+Started = datetime.datetime.now()
+
 
 def search_tenor(term):
     """Searches a Meme on Tenor.com for a given search term"""
@@ -41,6 +45,12 @@ def search_tenor(term):
         
     else:
         return('https://tenor.com/view/somethings-not-right-there-regina-mom-theres-something-wrong-there-somethings-wrong-gif-19844156')
+
+def google():
+    info = str(ping('8.8.8.8'))
+    data = info.split()
+    back = (data[6] +' '+ data[13] +' '+ data[20] +' '+ data[27])
+    return(back)
 
 @bot.event
 #starting the bot
@@ -63,11 +73,11 @@ async def r2d2(ctx):
     await ctx.send('https://tenor.com/view/happy-rocking-r2d2-star-wars-artoo-gif-15352285')
     
 @bot.command()
-async def ping(ctx):
+async def botping(ctx):
     """Returns the latency of the bot"""
     #edit = str(ctx.message.created_at - datetime.datetime.utcnow())
     #test = 'Latency is ' +str(int(float(edit.split(':')[2])*1000)) + 'ms'
-    now = datetime.datetime.now()
+    now = datetime.datetime.utcnow()
     answer = 'Your Ping to the Bot is ' + str(int(((ctx.message.created_at - now).microseconds)/1000)) + 'ms'
     await ctx.send(answer)
 
@@ -89,17 +99,37 @@ async def rand(ctx, number):
     await ctx.send(r)
     
 @bot.command()
-async def meme(ctx, term):
+async def meme(ctx, *, term):
     """gives you a meme for the search term"""
     back = search_tenor(term)
     await ctx.send(back)
-        
+ 
+     
 @bot.command()
 async def temp(ctx):
     """Returns the CPU Temp of R2D2"""
     cpu=CPUTemperature()
     temp = str((int(10*(cpu.temperature)))/10)
     await ctx.send('CPU temperature is ' + temp + '°C')
-
+    
+@bot.command()
+async def stats(ctx):
+    """Returns the actual stats of the bot/raspberry in a privat message"""
+    user = ctx.author
+    cpu=CPUTemperature()
+    temp = str((int(10*(cpu.temperature)))/10)
+    time = google()
+    now = datetime.datetime.utcnow()
+    botlatency = 'Your Ping to the Bot is ' + str(int(((ctx.message.created_at - now).microseconds)/1000)) + 'ms'
+    await user.send(temp + '°C')
+    await user.send('Running since: ' + Started.strftime("%d %B %Y, %H:%M"))
+    await user.send('Latencys are: '+ time)
+    await user.send(botlatency)
+    
+@bot.command()
+async def latency(ctx):
+    """Bot tells you how much Latency it has at the moment to google"""
+    time = google()
+    await ctx.send('Latencys are: '+ time)
 
 bot.run(TOKEN)
