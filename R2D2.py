@@ -52,6 +52,37 @@ def google():
     back = (data[6] +' '+ data[13] +' '+ data[20] +' '+ data[27])
     return(back)
 
+def warzone(username):
+    url = "https://call-of-duty-modern-warfare.p.rapidapi.com/warzone/" + replace(username)+"/battle"
+    
+    wz = open('Warzone API Key.txt', 'r')
+    warzone_API_key = wz.read()
+    
+    headers = {
+    'x-rapidapi-key': warzone_API_key,
+    'x-rapidapi-host': "call-of-duty-modern-warfare.p.rapidapi.com"
+    }
+
+    response = requests.request("GET", url, headers=headers)
+
+    if response.status_code == 200:
+        data = json.loads(response.content)
+        return((int(1000*(data['br']['kdRatio'])))/1000)
+    else: 
+        return('404')
+    
+def replace(input):
+    output = input.replace('#', '%23')
+    return(output)
+
+def check_userlist(username):
+    f = open('userlist.json')
+    userlist = json.load(f)
+    if username in userlist.keys():
+        return(userlist[username])
+    else:
+        return('404')
+
 @bot.event
 #starting the bot
 async def on_ready():
@@ -131,5 +162,27 @@ async def latency(ctx):
     """Bot tells you how much Latency it has at the moment to google"""
     time = google()
     await ctx.send('Latencys are: '+ time)
+    
+@bot.command()
+async def kd(ctx):
+    """Returns the K/D in Warzone"""
+    username = check_userlist(str(ctx.author))
+    if username == '404':
+        await ctx.send('User not in Userlist. Use !add to add the user to the Userlist')
+        await ctx.send(ctx.author)
+    else:
+        KD = warzone(username)
+        await ctx.send('The K/D Ratio of ' + username +' is ' + str(KD))
 
+@bot.command()
+async def adduser(ctx, battlenet):
+    """Adds a user to the userlist"""
+    f = open('userlist.json')
+    userlist = json.load(f)
+    userlist[str(ctx.author)] = str(battlenet)
+    f.close()
+    f = open('userlist.json', 'w')
+    json.dump(userlist, f)
+    await ctx.send('User has benn added to Userlist')
+    
 bot.run(TOKEN)
