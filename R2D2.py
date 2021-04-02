@@ -15,8 +15,6 @@ import sys
 import json
 import requests
 from gpiozero import CPUTemperature
-import time
-import eyed3
 import asyncio
 
 description = '''R2D2'''
@@ -95,10 +93,20 @@ async def up(ctx):
 
 
 @bot.command()
-#Sends the Boom Gif
 async def r2d2(ctx):
     """Returns a surprise"""
-    await ctx.send('https://tenor.com/view/happy-rocking-r2d2-star-wars-artoo-gif-15352285')
+    if ctx.author.voice != None:
+        channel = str(ctx.author.voice.channel)
+        voiceChannel = discord.utils.get(ctx.guild.voice_channels, name = channel)
+        await voiceChannel.connect()
+        voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
+        file = "r2d2.mp3"
+        voice.play(discord.FFmpegPCMAudio(file))
+        await ctx.send('https://tenor.com/view/happy-rocking-r2d2-star-wars-artoo-gif-15352285')
+        await asyncio.sleep(2)
+        await voice.disconnect()
+    else:
+        await ctx.send('https://tenor.com/view/happy-rocking-r2d2-star-wars-artoo-gif-15352285')
     
 @bot.command()
 async def ping(ctx):
@@ -183,29 +191,56 @@ async def upload(ctx):
     await ctx.send('https://drive.google.com/drive/folders/1iYh3dMzjyHiZp4gK7fJZetlHrHzDHjoX?usp=sharing')
     
 @bot.command()
-async def no(ctx):
-    """in construction"""
+async def play(ctx, effect):
+    """Plays a soundeffect which keyword you can enter after play if avaible"""
     if ctx.author.voice != None:
         channel = str(ctx.author.voice.channel)
         voiceChannel = discord.utils.get(ctx.guild.voice_channels, name = channel)
-        await voiceChannel.connect()
-        
-        voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
-        name = 'no2.mp3'
-        voice.play(discord.FFmpegPCMAudio(name))
-        duration = int(eyed3.load('no2.mp3').info.time_secs) + 2
-        await asyncio.sleep(duration)
-        await voice.disconnect()
+        f = open('sounddata.json')
+        sounddata = json.load(f)
+        if effect in sounddata.keys():
+            await voiceChannel.connect()
+            voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
+            file = (sounddata[effect][0])
+            voice.play(discord.FFmpegPCMAudio(file))
+            duration = int(sounddata[effect][1]) + 1
+            await asyncio.sleep(duration)
+            await voice.disconnect()
+        else:
+            await ctx.send('404 File not Found')
     else:
         await ctx.send('You must be in a Voice Channel')
     
 @bot.command()
 async def disconnect(ctx):
+    """If the bot is in a Voice Channel it disconnects"""
     voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
     if voice != None:
         await voice.disconnect()
     else:
         await ctx.send('Already disconnected')
+        
+@bot.command()
+async def dev(ctx, action):
+    """Gives you the Developer Role of the server. """
+    user = ctx.message.author
+    role = discord.utils.get(user.guild.roles, name = 'DEV')
+    if action == "add" and role not in user.roles:
+        await user.add_roles(role)
+    elif action == "add" and role in user.roles:
+        await ctx.send('You already got this role')
+    elif action == "del" and role in user.roles:
+        await user.remove_roles(role)
+    elif action == "del" and role not in user.roles:
+        await ctx.send('Cannot delete a Role that you dont have')
+    else:
+        await ctx.send('Command not Found. Use add or del for delete')
+        
+@bot.command()
+async def test(ctx):
+    await ctx.send(ctx.message.author)
+        
     
     
 bot.run(TOKEN)
+
