@@ -9,13 +9,15 @@ nest_asyncio.apply()
 import discord
 from discord.ext import commands
 from subprocess import call
-import datetime
+from datetime import datetime
 import random
 import sys
 import json
 import requests
 from gpiozero import CPUTemperature
-from pythonping import ping
+import time
+import eyed3
+import asyncio
 
 description = '''R2D2'''
 intents = discord.Intents.default()
@@ -29,7 +31,7 @@ tenor_api = open('Tenor API Key.txt', 'r')
 TENOR_API_KEY = tenor_api.read()
 Limit_Tenor = 1
 
-Started = datetime.datetime.now()
+Started = datetime.now()
 
 
 def search_tenor(term):
@@ -46,11 +48,6 @@ def search_tenor(term):
     else:
         return('https://tenor.com/view/somethings-not-right-there-regina-mom-theres-something-wrong-there-somethings-wrong-gif-19844156')
 
-def google():
-    info = str(ping('8.8.8.8'))
-    data = info.split()
-    back = (data[6] +' '+ data[13] +' '+ data[20] +' '+ data[27])
-    return(back)
 
 def warzone(username):
     url = "https://call-of-duty-modern-warfare.p.rapidapi.com/warzone/" + replace(username)+"/battle"
@@ -104,13 +101,14 @@ async def r2d2(ctx):
     await ctx.send('https://tenor.com/view/happy-rocking-r2d2-star-wars-artoo-gif-15352285')
     
 @bot.command()
-async def botping(ctx):
+async def ping(ctx):
     """Returns the latency of the bot"""
-    #edit = str(ctx.message.created_at - datetime.datetime.utcnow())
-    #test = 'Latency is ' +str(int(float(edit.split(':')[2])*1000)) + 'ms'
-    now = datetime.datetime.utcnow()
-    answer = 'Your Ping to the Bot is ' + str(int(((ctx.message.created_at - now).microseconds)/1000)) + 'ms'
-    await ctx.send(answer)
+    ms = (datetime.utcnow() - ctx.message.created_at).microseconds / 1000
+    
+    before = datetime.now()
+    await ctx.send('Latency: ' + str(int(ms)) + 'ms')
+    ms2 = (datetime.now() - before).microseconds / 1000
+    await ctx.send('Message delay: '+ str(int(ms2)) + 'ms')
 
 @bot.command()
 #test shutdown of the bot and even the Raspberry Pi if active
@@ -146,26 +144,18 @@ async def temp(ctx):
 @bot.command()
 async def stats(ctx):
     """Returns the actual stats of the bot/raspberry in a privat message"""
+    ms = (datetime.utcnow() - ctx.message.created_at).microseconds / 1000
     user = ctx.author
     cpu=CPUTemperature()
     temp = str((int(10*(cpu.temperature)))/10)
-    time = google()
-    now = datetime.datetime.utcnow()
-    botlatency = 'Your Ping to the Bot is ' + str(int(((ctx.message.created_at - now).microseconds)/1000)) + 'ms'
+    await user.send(content = f"Ping is: `{str(int(ms))}ms`")
     await user.send(temp + '°C')
     await user.send('Running since: ' + Started.strftime("%d %B %Y, %H:%M"))
-    await user.send('Latencys are: '+ time)
-    await user.send(botlatency)
     
-@bot.command()
-async def latency(ctx):
-    """Bot tells you how much Latency it has at the moment to google"""
-    time = google()
-    await ctx.send('Latencys are: '+ time)
     
 @bot.command()
 async def kd(ctx):
-    """Returns the K/D in Warzone"""
+    """Returns the K/D in Warzone if you are in the Userlist"""
     username = check_userlist(str(ctx.author))
     if username == '404':
         await ctx.send('User not in Userlist. Use !add to add the user to the Userlist')
@@ -176,7 +166,7 @@ async def kd(ctx):
 
 @bot.command()
 async def adduser(ctx, battlenet):
-    """Adds a user to the userlist"""
+    """Adds a user to the userlist for kd in Warzone. Write !adduser followed by your Battlenetname with ID Number"""
     f = open('userlist.json')
     userlist = json.load(f)
     userlist[str(ctx.author)] = str(battlenet)
@@ -184,5 +174,38 @@ async def adduser(ctx, battlenet):
     f = open('userlist.json', 'w')
     json.dump(userlist, f)
     await ctx.send('User has benn added to Userlist')
+    
+
+@bot.command()
+async def upload(ctx):
+    """Returns the Link to the Highlights Folder"""
+    await ctx.send('You can upload your Highlights here for the others to enjoy it here:')
+    await ctx.send('https://drive.google.com/drive/folders/1iYh3dMzjyHiZp4gK7fJZetlHrHzDHjoX?usp=sharing')
+    
+@bot.command()
+async def no(ctx):
+    """in construction"""
+    if ctx.author.voice != None:
+        channel = str(ctx.author.voice.channel)
+        voiceChannel = discord.utils.get(ctx.guild.voice_channels, name = channel)
+        await voiceChannel.connect()
+        
+        voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
+        name = 'no2.mp3'
+        voice.play(discord.FFmpegPCMAudio(name))
+        duration = int(eyed3.load('no2.mp3').info.time_secs) + 2
+        await asyncio.sleep(duration)
+        await voice.disconnect()
+    else:
+        await ctx.send('You must be in a Voice Channel')
+    
+@bot.command()
+async def disconnect(ctx):
+    voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
+    if voice != None:
+        await voice.disconnect()
+    else:
+        await ctx.send('Already disconnected')
+    
     
 bot.run(TOKEN)
