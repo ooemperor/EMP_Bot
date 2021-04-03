@@ -237,8 +237,10 @@ async def dev(ctx, action):
         await ctx.send('Command not Found. Use add or del for delete')
         
 @bot.command()
-async def test(ctx):
-    await ctx.send(ctx.message.author)
+async def lama(ctx, user):
+    await ctx.send('https://tenor.com/view/llama-spits-kid-funny-gif-5532278')
+    text = user + ' wurde vom Lama bespuckt!'
+    await ctx.send(text)
         
     
     
