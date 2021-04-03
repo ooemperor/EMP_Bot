@@ -238,7 +238,7 @@ async def dev(ctx, action):
         
 @bot.command()
 async def lama(ctx, user):
-    await ctx.send('https://tenor.com/view/llama-spits-kid-funny-gif-5532278')
+    await ctx.send('https://tenor.com/view/escupitajo-escupida-escupir-asco-llama-gif-11822684')
     text = user + ' wurde vom Lama bespuckt!'
     await ctx.send(text)
         
