@@ -192,24 +192,38 @@ async def upload(ctx):
     
 @bot.command()
 async def play(ctx, effect):
-    """Plays a soundeffect which keyword you can enter after play if avaible"""
-    if ctx.author.voice != None:
-        channel = str(ctx.author.voice.channel)
-        voiceChannel = discord.utils.get(ctx.guild.voice_channels, name = channel)
-        f = open('sounddata.json')
-        sounddata = json.load(f)
-        if effect in sounddata.keys():
-            await voiceChannel.connect()
-            voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
-            file = (sounddata[effect][0])
-            voice.play(discord.FFmpegPCMAudio(file))
-            duration = int(sounddata[effect][1]) + 1
-            await asyncio.sleep(duration)
-            await voice.disconnect()
-        else:
-            await ctx.send('404 File not Found')
+    """Plays a soundeffect which keyword you can enter after play if avaible. Send "!play help" for all avaible sound effects. """
+    f = open('sounddata.json')
+    sounddata = json.load(f)
+    
+    if effect == 'help':
+        keylist = []
+       
+        for key in sounddata:
+            keylist.append(key)
+        keytext = 'Possible Effects are: '
+        
+        for i in range(0, len(keylist)):
+            keytext = keytext + keylist[i] + ', '
+        await ctx.send(keytext)
     else:
-        await ctx.send('You must be in a Voice Channel')
+        if ctx.author.voice != None:
+            channel = str(ctx.author.voice.channel)
+            voiceChannel = discord.utils.get(ctx.guild.voice_channels, name = channel)
+        
+            if effect in sounddata.keys():
+                await ctx.message.delete()
+                await voiceChannel.connect()
+                voice = discord.utils.get(bot.voice_clients, guild=ctx.guild)
+                file = (sounddata[effect][0])
+                voice.play(discord.FFmpegPCMAudio(file))
+                duration = int(sounddata[effect][1]) + 1
+                await asyncio.sleep(duration)
+                await voice.disconnect()
+            else:
+                    await ctx.send('404 File not Found')
+        else:
+            await ctx.send('You must be in a Voice Channel')
     
 @bot.command()
 async def disconnect(ctx):
@@ -225,6 +239,7 @@ async def dev(ctx, action):
     """Gives you the Developer Role of the server. """
     user = ctx.message.author
     role = discord.utils.get(user.guild.roles, name = 'DEV')
+    
     if action == "add" and role not in user.roles:
         await user.add_roles(role)
     elif action == "add" and role in user.roles:
@@ -238,11 +253,17 @@ async def dev(ctx, action):
         
 @bot.command()
 async def lama(ctx, user):
-    await ctx.send('https://tenor.com/view/escupitajo-escupida-escupir-asco-llama-gif-11822684')
-    text = user + ' wurde vom Lama bespuckt!'
-    await ctx.send(text)
+    """Lama will spit on the tagged user"""
+    if ('<@!' + str(ctx.author.id) + '>')  == (str(user)):
+        await ctx.message.delete()
+        await ctx.send('are you really that stupid?')
+    else:
+        await ctx.message.delete()
+        await ctx.send('https://tenor.com/view/escupitajo-escupida-escupir-asco-llama-gif-11822684')
+        text = user + ' wurde vom Lama bespuckt!'
+        await ctx.send(text)
         
-    
-    
 bot.run(TOKEN)
+
+
 
